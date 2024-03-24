@@ -1,0 +1,15 @@
+{
+  "name": "planilha-meta-insights",
+  "version": "0.0.1",
+  "description": "Crie e mantenha uma planilha com as principais métricas dos perfis no Facebook e Instagram facilmente, com automações para facilitar a inserção de dados baixados manualmente do Meta Business Suite.",
+  "main": "main.js",
+  "scripts": {
+    "push & watch": "clasp push --watch",
+    "push": "clasp push"
+  },
+  "author": "André Moura Santos",
+  "license": "MIT",
+  "dependencies": {
+    "@types/google-apps-script": "^1.0.82"
+  }
+}
