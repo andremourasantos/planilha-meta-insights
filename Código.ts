@@ -4,7 +4,7 @@ const SCRIPT_LIBRARY_NAME = 'PlanilhaMetaInsights';
 const FACEBOOK_INSIGHTS_SHEET_NAME:string = 'Facebook Insights';
 const INSTAGRAM_INSIGHTS_SHEET_NAME:string = 'Instagram Insights';
 
-//Sheet estilization
+//Global sheet estilization
 const ROW_HEIGHT:number = 42;
 const COLUMN_WIDTH_P:number = 84;
 const COLUMN_WIDTH_M:number = COLUMN_WIDTH_P * 2;
@@ -15,7 +15,10 @@ const COLUMN_WIDTH_G:number = COLUMN_WIDTH_P * 3;
  *
  */
 function addMenu() {
-  const FIRST_STEPS_SUBMENU = UI.createMenu('Primeiros passos').addItem('Criar planilhas', `${SCRIPT_LIBRARY_NAME}.createFacebookInsightsSheet`);
+  const FIRST_STEPS_SUBMENU = UI
+    .createMenu('Primeiros passos')
+      .addItem('Criar Facebook Insights', `${SCRIPT_LIBRARY_NAME}.directToCreateFacebookSheet`)
+      .addItem('Criar Instagram Insights', `${SCRIPT_LIBRARY_NAME}.directToCreateInstagramSheet`)
 
   UI.createMenu('🤖 Assistente')
     .addSubMenu(FIRST_STEPS_SUBMENU)
@@ -29,30 +32,35 @@ function addMenu() {
  *
  * @returns Either "sheet_already_exists" if the sheet already exists or "sheet_created" if a new sheet is successfully created.
  */
-function createFacebookInsightsSheet():'sheet_already_exists' | 'sheet_created' {
-  let facebookSheet:GoogleAppsScript.Spreadsheet.Sheet;
+function createInsightsSheet(platform:'Facebook' | 'Instagram'):'sheet_already_exists' | 'sheet_created' {
+  let sheet:GoogleAppsScript.Spreadsheet.Sheet;
+  const SHEET_NAME = platform === 'Facebook' ? FACEBOOK_INSIGHTS_SHEET_NAME : INSTAGRAM_INSIGHTS_SHEET_NAME;
 
   try {
-    ACTIVE_SPREADSHEET.toast(`Criando planilha ${FACEBOOK_INSIGHTS_SHEET_NAME}...`)
-    facebookSheet = ACTIVE_SPREADSHEET.insertSheet(FACEBOOK_INSIGHTS_SHEET_NAME);
+    sheet = ACTIVE_SPREADSHEET.insertSheet(SHEET_NAME);
   } catch (error) {
-    showCustomErrorAlert('⚠️ Planilha já existente', `A planilha ${FACEBOOK_INSIGHTS_SHEET_NAME} já foi criada. Caso queria criá-la novamente, é necessário excluir a atual e executar essa ação novamente.`);
+    showCustomErrorAlert('⚠️ Planilha já existente', `A planilha ${SHEET_NAME} já foi criada. Caso queria criá-la novamente, é necessário excluir a atual e executar essa ação novamente.`);
 
     return 'sheet_already_exists';
   }
 
-  ACTIVE_SPREADSHEET.setActiveSheet(facebookSheet);
+  ACTIVE_SPREADSHEET.toast(`Criando planilha ${SHEET_NAME}...`)
+  ACTIVE_SPREADSHEET.setActiveSheet(sheet);
 
-  defineRowsAndColumnsWireframes(facebookSheet, 365, 6);
-  defineSheetTextAligment(facebookSheet, 'right');
-  commomSheetEstilization(facebookSheet);
+  const NUMBER_OF_ROWS = getNumberOfDaysInYear();
+
+  defineRowsAndColumnsWireframes(sheet, NUMBER_OF_ROWS, 6);
+  defineSheetTextAligment(sheet, 'right');
+  commomSheetEstilization(sheet);
 
   const HEADER_TITLES = [['Nº do Mês', 'Mês', 'Data', 'Alcance', 'Curtidas', 'Seguidores']];
 
   //TODO: MAKE THE defineRowsAndColumnsWireframes FUNCTION ACCEPT COLUMN WIDTHS AS A PARAMETER.
   const HEADER_COLUMN_WIDTHS = [COLUMN_WIDTH_P, COLUMN_WIDTH_P, COLUMN_WIDTH_P, COLUMN_WIDTH_M, COLUMN_WIDTH_M, COLUMN_WIDTH_M];
   
-  facebookSheet.getRange(1,1,1,6).setValues(HEADER_TITLES);
+  sheet.getRange(1,1,1,6).setValues(HEADER_TITLES);
+
+  populateDefaultValues(sheet);
 
   return 'sheet_created';
 }
@@ -66,6 +74,22 @@ function aboutTheScript():void {
 }
 
 //Auxiliary functions
+/**
+ * Used in the menu items to direct the creation of the Facebook Insights sheet using the `createInsightsSheet` function.
+ *
+ */
+function directToCreateFacebookSheet() {
+  createInsightsSheet('Facebook');
+}
+
+/**
+ * Used in the menu items to direct the creation of the Instagram Insights sheet using the `createInsightsSheet` function.
+ *
+ */
+function directToCreateInstagramSheet() {
+  createInsightsSheet('Instagram');
+}
+
 /**
  * Shows a Browser message saying that nothing was done and offers only a button to click "OK".
  *
@@ -122,8 +146,69 @@ function commomSheetEstilization(sheet:GoogleAppsScript.Spreadsheet.Sheet) {
   const HEADER_STYLE = SpreadsheetApp.newTextStyle().setBold(true).build();
 
   sheet.getRange(1,1,1,sheet.getMaxColumns()).setTextStyle(HEADER_STYLE);
+  ALL_SHEET.setBorder(true, true, true, true, true, true, "#999999", SpreadsheetApp.BorderStyle.SOLID);
 
   ALL_SHEET
     .setFontFamily('Atkinson Hyperlegible')
-    .applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREY)
+    .applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREY);
+}
+
+/**
+ * Populate the default values and formulas into a defined sheet. The sheet must be a Facebook or Intagram Insights sheet.
+ *
+ * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet The sheet object to insert the default values.
+ */
+function populateDefaultValues(sheet:GoogleAppsScript.Spreadsheet.Sheet):void {
+  const SHEET_MAX_ROWS = sheet.getMaxRows();
+  const DATES_RANGE = sheet.getRange(2,3,SHEET_MAX_ROWS,1);
+  const MONTH_NAME_RANGE = sheet.getRange(2,2,SHEET_MAX_ROWS,1);
+  const MONTH_NUMBER_RANGE = sheet.getRange(2,1,SHEET_MAX_ROWS,1);
+
+  const getDatesFromCurrentYear = () => {
+    const CURRENT_YEAR = new Date().getFullYear();
+
+    const START_DATE = new Date(CURRENT_YEAR, 0, 1);
+    const END_DATE = new Date(CURRENT_YEAR, 11, 31);
+    let datesArray:Date[][] = [];
+
+    for (let currentDate = START_DATE; currentDate <= END_DATE; currentDate.setDate(currentDate.getDate() + 1)) {
+      datesArray.push([new Date(currentDate)]);
+    }
+    return datesArray;
+  };
+
+  DATES_RANGE.setValues(getDatesFromCurrentYear());
+
+  for(let i=0;i<SHEET_MAX_ROWS;i++) {
+    const CELL = MONTH_NAME_RANGE.getCell(i+1,1);
+    const CELL_ROW = CELL.getRow();
+
+    CELL.setFormula(`=PROPER(TEXT(C${CELL_ROW};"mmmm"))`);
+  };
+
+  for(let i=0;i<SHEET_MAX_ROWS;i++) {
+    const CELL = MONTH_NUMBER_RANGE.getCell(i+1,1);
+    const CELL_ROW = CELL.getRow();
+
+    CELL.setFormula(`=MONTH(C${CELL_ROW})`);
+  };
+}
+
+/**
+ * Get the number of days in the current year.
+ *
+ * @return {number} the number of days.
+ */
+function getNumberOfDaysInYear():number {
+  const CURRENT_YEAR = new Date().getFullYear();
+
+  const START_DATE = new Date(CURRENT_YEAR, 0, 1);
+  const END_DATE = new Date(CURRENT_YEAR, 11, 31);
+  let daysArray:number[] = [];
+
+  for (let currentDate = START_DATE; currentDate <= END_DATE; currentDate.setDate(currentDate.getDate() + 1)) {
+    daysArray.push(currentDate.getDate());
+  }
+
+  return daysArray.length;
 }
