@@ -26,12 +26,11 @@ Essa biblioteca ajuda você a aumentar a sua produtividade e manter a consistên
 - 🏅 Licença de domínio público.
   - Um conhecimento básico de JavaScript é recomendado para realizar alterações no código.
 
-
 ---
 
 ## Utilizando a biblioteca 🪄
 
-O Calendário de Datas Comemorativas conta com diversas funções úteis e intuitivas para que você possa começar a trabalhar imediatamente após a configuração inicial! Veja abaixo os primeiros passos:
+A biblioteca de Planilha de Insights da Meta conta com diversas funções úteis e intuitivas para que você possa começar a trabalhar imediatamente após a configuração inicial! Veja abaixo os primeiros passos:
 
 ### 1️⃣: Crie uma planilha para cada plataforma
 
