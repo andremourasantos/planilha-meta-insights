@@ -22,6 +22,7 @@ function addMenu() {
 
   UI.createMenu('🤖 Assistente')
     .addSubMenu(FIRST_STEPS_SUBMENU)
+    .addItem('Importar Alcance', `${SCRIPT_LIBRARY_NAME}.getReachData`)
     .addSeparator()
     .addItem('Sobre o código', `${SCRIPT_LIBRARY_NAME}.aboutTheScript`)
   .addToUi();
