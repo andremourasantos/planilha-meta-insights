@@ -1,5 +1,5 @@
 function onOpen(e) {
-  addMenu()
+  addMenu();
 }
 
 const ACTIVESPREADSHEET = SpreadsheetApp.getActiveSpreadsheet();
@@ -7,37 +7,38 @@ const UI = SpreadsheetApp.getUi();
 
 function addMenu() {
   SpreadsheetApp.getUi()
-    .createMenu('🤖 Automações')
-      .addItem('Importar Alcance', 'importReach')
-      .addItem('Importar Curtidas', 'importLikes')
-      .addItem('Importar Seguidores', 'importFollowers')
-      .addSeparator()
-      .addItem('Sobre o script', 'aboutTheScript')
-    .addToUi()
+    .createMenu(' Automações')
+    .addItem('Importar Alcance', 'importReach')
+    .addItem('Importar Curtidas', 'importLikes')
+    .addItem('Importar Seguidores', 'importFollowers')
+    .addSeparator()
+    .addItem('Sobre o script', 'aboutTheScript')
+    .addToUi();
 }
 
 //Main functions
 function importReach() {
   let confirmation1 = Browser.msgBox('Importar Alcance', "Faça o upload do arquivo CSV das métricas de Alcance e nomeia a nova guia como \"Alcance\". Apenas após seguir esse passo, inicie o script.", Browser.Buttons.OK_CANCEL).toUpperCase();
 
-  if(confirmation1 === 'OK'){
-    if(!doesGetSheetByNameExistis('Alcance')){UI.alert('Não foi encontrada a planilha "Alcance". Tente novamente após criar a planilha.')}
+  if (confirmation1 === 'OK') {
+    if (!doesGetSheetByNameExistis('Alcance')) {
+      UI.alert('Não foi encontrada a planilha "Alcance". Tente novamente após criar a planilha.');
+    }
 
     let reachData = {
       facebook: null,
-      instagram: null
+      instagram: null,
+    };
+
+    if (findRowWithValue('Alcance', 'A:A', 'Alcance no Facebook')) {
+      reachData.facebook = getReachData('Facebook'); // Potential missing parenthesis here (check this function)
     }
 
-    if(findRowWithValue('Alcance', 'A:A', 'Alcance no Facebook')){
-      reachData.facebook = getReachData('Facebook');
-    }
-
-    if(findRowWithValue('Alcance', 'A:A', 'Alcance do Instagram')){
-      reachData.instagram = getReachData('Instagram');
+    if (findRowWithValue('Alcance', 'A:A', 'Alcance do Instagram')) {
+      reachData.instagram = getReachData('Instagram'); // Potential missing parenthesis here (check this function)
     }
 
     return pasteReachData(reachData);
-
   } else {
     showNothingWasDoneAlert();
   }
@@ -76,23 +77,45 @@ function importLikes() {
   let confirmation1 = Browser.msgBox('Importar Visitas', "Faça o upload do arquivo CSV das métricas de Visitas e Curtidas e nomeia a nova guia como \"Visitas\". Apenas após seguir esse passo, inicie o script.", Browser.Buttons.OK_CANCEL).toUpperCase();
 
   //Validations
-  if(confirmation1 !== 'OK'){return showNothingWasDoneAlert()};
-  if(!doesGetSheetByNameExistis('Visitas')){UI.alert('Não foi encontrada a planilha "Curtidas". Tente novamente após criar a planilha.')};
+  if (confirmation1 !== 'OK') {
+    return showNothingWasDoneAlert();
+  }
+  if (!doesGetSheetByNameExistis('Visitas')) {
+    UI.alert('Não foi encontrada a planilha "Curtidas". Tente novamente após criar a planilha.');
+  }
 
   let likesData = {
     facebook: null,
-    instagram: null
+    instagram: null,
+  };
+
+  if (findRowWithValue('Visitas', 'A:A', 'Visitas ao Facebook')) {
+    likesData.facebook = getLikeData('Facebook'); // Potential missing parenthesis here (check this function)
   }
 
-  if(findRowWithValue('Visitas', 'A:A', 'Visitas ao Facebook')){
-    likesData.facebook = getLikeData('Facebook');
+  if (findRowWithValue('Visitas', 'A:A', 'Visitas ao perfil do Instagram')) {
+    likesData.instagram = getLikeData('Instagram'); // Potential missing parenthesis here (check this function)
   }
 
-  if(findRowWithValue('Visitas', 'A:A', 'Visitas ao perfil do Instagram')){
-    likesData.instagram = getLikeData('Instagram');
+  return pasteLikesData(likesData);
+}
+
+function getLikeData(platform) { // Potential missing parenthesis here (update after review)
+  const PLATFORM = platform === 'Facebook' ? 'Visitas ao Facebook' : 'Visitas ao perfil do Instagram';
+
+  ACTIVESPREADSHEET.toast('Importando dados de ' + PLATFORM);
+  const ACTIVESHEET = ACTIVESPREADSHEET.getSheetByName('Visitas');
+
+  let startOfData = findRowWithValue('Visitas', 'A:A', PLATFORM) + 2;
+  let endOfData;
+
+  if (platform === 'Facebook') {
+    endOfData = findRowWithValue('Visitas', 'A:A', '') - 1;
+  } else {
+    endOfData = ACTIVESHEET.getLastRow();
   }
 
-  return pasteLikesData(likesData)
+  return dataValues = ACTIVESHEET.getRange("A" + startOfData + ":" + "B" + endOfData).getValues(); // Potential missing parenthesis here (update after review)
 }
 
 function getLikeData(platform) {
@@ -235,7 +258,7 @@ function pasteReachData(platformData) {
   const INSTAGRAM_DATA = platformData.instagram;
 
   const pasteData = (platform, sheetToUse, dataToUse) => {
-    ACTIVESPREADSHEET.toast(Inserindo dados do ${platform}... Aguarde a confirmação de conclusão.);
+    ACTIVESPREADSHEET.toast(`Inserindo dados do ${platform}... Aguarde a confirmação de conclusão.`);
     const INTERVAL = sheetToUse.getLastRow();
     const SEARCH = sheetToUse.getRange('C2:C' + INTERVAL).getValues().map(index => {return new Date(index[0])});
 
@@ -339,7 +362,7 @@ function pasteFollowersData(platformData) {
   ACTIVESPREADSHEET.toast('Informações de inseridas com sucesso.');
 }
 
-function getLastRowWithValue(columnToCheck:string) {
+function getLastRowWithValue(columnToCheck) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   var column = sheet.getRange(columnToCheck);
   var values = column.getValues();  // get all data in a column
